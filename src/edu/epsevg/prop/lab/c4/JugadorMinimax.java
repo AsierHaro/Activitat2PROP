@@ -29,11 +29,115 @@ public class JugadorMinimax implements Jugador, IAuto{
 
     @Override
     public int moviment(Tauler t, int color) {
-        
+        nodesExplorats = 0;
+        colorPropi = color;
+        int colorContrari = -color;
+
+        for(int i = 0; i < t.getMida(); i++){
+            if(t.movpossible(i)){
+                Tauler temp = new Tauler(t);
+                temp.afegeix(i, color);
+                if(verificarVictoria(temp) == 100000){
+                    return i;
+                }else if(verificarVictoria(temp) == -100000){
+                    return i;
+                }
+            }
+        }
+
+        int millorMoviment = -1;
+        int millorValor = Integer.MIN_VALUE;
+
+        ArrayList<Integer> movimentsPossibles = new ArrayList<>();
+        for (int col = 0; col < t.getMida(); col++) {
+            if (t.movpossible(col)) {
+                movimentsPossibles.add(col);
+            }
+        }
+
+        for (int col : movimentsPossibles) {
+            if (millorMoviment == -1) {
+                millorMoviment = col;
+            }
+
+            Tauler nouTauler = new Tauler(t);
+            nouTauler.afegeix(col, color);
+
+            int valor = minimax(nouTauler, profunditatMaxima - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, false, colorContrari);
+
+            if (valor > millorValor) {
+                millorValor = valor;
+                millorMoviment = col;
+            }
+        }
+
+        System.out.println("Nodes explorats: " + nodesExplorats);
+
+        if (millorMoviment == -1) {
+            for (int col = 0; col < t.getMida(); col++) {
+                if (t.movpossible(col)) {
+                    millorMoviment = col;
+                    break;
+                }
+            }
+        }
+
+        return millorMoviment;
     }
     
-    private int minimax(Tauler t, int profunditat, int alpha, int beta, boolean esMaximitzant, int color){
-        
+    private int minimax(Tauler t, int profunditat, int alpha, int beta, boolean esMaximitzant, int color) {
+        if (profunditat == 0 || !t.espotmoure()) {
+            nodesExplorats++;
+            return avaluarTauler(t);
+        }
+
+        int valorVictoria = verificarVictoria(t);
+        if(valorVictoria != 0){
+            nodesExplorats++;
+            return valorVictoria;
+        }
+
+        ArrayList<Integer> movimentsPossibles = new ArrayList<>();
+        for (int col = 0; col < t.getMida(); col++) {
+            if (t.movpossible(col)) {
+                movimentsPossibles.add(col);
+            }
+        }
+
+        if (esMaximitzant) {
+            int maxValor = Integer.MIN_VALUE;
+
+            for (int col : movimentsPossibles) {
+                Tauler nouTauler = new Tauler(t);
+                nouTauler.afegeix(col, color);
+
+                int valor = minimax(nouTauler, profunditat - 1, alpha, beta, false, -color);
+                maxValor = Math.max(maxValor, valor);
+                alpha = Math.max(alpha, valor);
+
+                if (beta <= alpha) {
+                    break;
+                }
+            }
+            return maxValor;
+
+        } else {
+            int minValor = Integer.MAX_VALUE;
+
+            for (int col : movimentsPossibles) {
+                Tauler nouTauler = new Tauler(t);
+                nouTauler.afegeix(col, color);
+
+                int valor = minimax(nouTauler, profunditat - 1, alpha, beta, true, -color);
+                minValor = Math.min(minValor, valor);
+                beta = Math.min(beta, valor);
+
+                if (beta <= alpha) {
+                    break;
+                }
+            }
+            return minValor;
+        }
     }
     
     
